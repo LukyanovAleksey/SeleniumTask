@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MainPage extends AbstractPage {
     private final String BASE_URL = "https://www.w3schools.com/sql/trysql.asp?filename=trysql_select_all";
@@ -89,29 +90,27 @@ public class MainPage extends AbstractPage {
         return new Table(rows);
     }
 
-    public String getColumnValueFromFoundRow(Table table, String columnName, String columnValue, String columnNameToSearch) {
-        int columnIndexToSearch = getColumnIndex(columnNameToSearch);
-        int firstRowIndex = findFirstRowIndex(table, columnName, columnValue);
-        return table.getRows().get(firstRowIndex).getCells().get(columnIndexToSearch).getValue();
-    }
-
-    public int findFirstRowIndex(Table table, String columnName, String value) {
-        int columnIndex = getColumnIndex(columnName);
-        int result = 0;
-        List<Row> rows = table.getRows();
-        for (Row row : rows) {
-            if (value.equals(row.getCell(columnIndex).getValue())) result = rows.indexOf(row);
-        }
-        return result;
-    }
-
-    public int getColumnIndex(String headerName) {
-        int result = 0;
+    public String getColumnValueFromFoundRow(String columnName, String columnValue, String columnNameToSearch) {
+        waitSearchResults(30);
         List<String> headers = getHeaders();
-        for (String header : headers) {
-            if (headerName.equals(header)) result = headers.indexOf(header);
-        }
-        return result;
+        int columnIndex = headers.indexOf(columnName);
+        int columnIndexToSearch = headers.indexOf(columnNameToSearch);
+        List<WebElement> allColumns = resultSql.findElements(new ByChained(table, row, column));
+
+        int step = headers.size();
+        int size = allColumns.size();
+        // Limit to carefully avoid IndexOutOfBoundsException
+        int limit = size / step + Math.min(size % step, 1);
+
+        List<String> selectedColumnValues = Stream.iterate(columnIndex, i -> i + step)
+                .limit(limit)
+                .map(allColumns::get)
+                .map(WebElement::getText)
+                .collect(Collectors.toList());
+        int rowIndex = selectedColumnValues.indexOf(columnValue);
+
+        WebElement rowToSearch = resultSql.findElements(new ByChained(table, this.row)).get(rowIndex + 1); //headers included in table rows
+        return rowToSearch.findElements(column).get(columnIndexToSearch).getText();
     }
 
     private List<String> getHeaders() {
@@ -120,7 +119,8 @@ public class MainPage extends AbstractPage {
     }
 
     public void run() {
-        runSqlButton.click();
+        new WebDriverWait(driver, Duration.ofSeconds(10))
+                .until(ExpectedConditions.elementToBeClickable(runSqlButton)).click();
     }
 
     public void waitSearchResults(int timeoutInSeconds) {

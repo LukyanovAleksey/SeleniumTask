@@ -45,9 +45,8 @@ public class CustomerQueryTest extends BaseTest {
     public void testThatExactContactNameHasAnExactAddress() {
         MainPage mainPage = new MainPage(getDriver());
         mainPage.executeQuery(SELECT_ALL_FROM_CUSTOMERS);
-        Table table = mainPage.getTable();
-        String address = mainPage.getColumnValueFromFoundRow(table, "ContactName", "Giovanni Rovelli", "Address");
 
+        String address = mainPage.getColumnValueFromFoundRow("ContactName", "Giovanni Rovelli", "Address");
         Assert.assertEquals(address, "Via Ludovico il Moro 22");
     }
 

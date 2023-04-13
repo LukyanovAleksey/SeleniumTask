@@ -14,11 +14,21 @@ import java.time.Duration;
 
 public class DriverFactory {
     public static WebDriver createWebDriver() {
+        //java.util.concurrent.TimeoutException thrown at random netty read timeouts with RemoteWebDriver
+        //https://github.com/SeleniumHQ/selenium/issues/9528
+        System.setProperty("webdriver.http.factory", "jdk-http-client");
+
         String driver = System.getProperty("driver", "chrome");
         Capabilities capabilities = null;
 
         if ("chrome".equals(driver)) {
             capabilities = new ChromeOptions();
+            ((ChromeOptions) capabilities).addArguments(
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-browser-side-navigation",
+                    "--disable-gpu"
+            );
         } else if ("firefox".equals(driver)) {
             capabilities = new FirefoxOptions();
         } else if ("edge".equals(driver)) {
