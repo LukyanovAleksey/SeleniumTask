@@ -45,7 +45,11 @@ public class MainPage extends AbstractPage {
 
     public MainPage(WebDriver driver) {
         super(driver);
-        driver.navigate().to(BASE_URL);
+        try {
+            driver.navigate().to(BASE_URL);
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
         PageFactory.initElements(this.driver, this);
         handleCookiesPopup(5);
     }
@@ -137,10 +141,9 @@ public class MainPage extends AbstractPage {
     public void handleCookiesPopup(int timeoutInSeconds) {
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-                    .until(ExpectedConditions.not(ExpectedConditions.elementToBeClickable(cookiesAcceptButton)));
-        } catch (TimeoutException e) {
+                    .until(ExpectedConditions.elementToBeClickable(cookiesAcceptButton)).click();
+        } catch (TimeoutException e) { //if cookies popup is not displayed
             e.printStackTrace();
-            cookiesAcceptButton.click();
         }
     }
 
